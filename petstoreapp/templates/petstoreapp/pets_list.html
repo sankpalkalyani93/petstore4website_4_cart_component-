@@ -29,7 +29,7 @@
                     <tr>
                         <td><a href="{% url 'pets_detail' pk=pet.pk %}">{{ pet.name }}</a></td>
                         <td>{{ pet.breed }}</td>
-                        <td>${{ pet.price }}</td>
+                        <td>INR {{ pet.price }}</td>
                         <td>
                             {% if pet.image %}
                             <img src="{{ pet.image.url }}" alt="{{ pet.name }}" style="max-width: 100px; height: auto;">

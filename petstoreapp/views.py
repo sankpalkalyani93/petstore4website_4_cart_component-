@@ -1,3 +1,6 @@
+import razorpay
+from django.views.decorators.csrf import csrf_exempt
+from django.conf import settings
 from django.db import IntegrityError
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.decorators import login_required
@@ -76,15 +79,6 @@ def add_pet_to_cart(request, pk):
         quantity = int(request.POST.get('quantity', 1))
         cart, created = Cart.objects.get_or_create(user=request.user)
 
-        """try:
-            # Attempt to create a new CartItem with the provided quantity
-            cart_item, created = CartItem.objects.get_or_create(cart=cart, pet=pet, defaults={'quantity': quantity})
-        except IntegrityError:
-            # Handle case when the cart item already exists for the pet
-            cart_item = CartItem.objects.get(cart=cart, pet=pet)
-            cart_item.quantity += int(quantity)
-            cart_item.save()"""
-        
         # Check if the CartItem already exists for the pet in the cart
         cart_item, created = CartItem.objects.get_or_create(cart=cart, pet=pet, defaults={'quantity': quantity})
 
@@ -99,11 +93,46 @@ def add_pet_to_cart(request, pk):
 
         return redirect('cart')
 
+@login_required
+def remove_from_cart(request, cart_item_id):
+    cart_item = get_object_or_404(CartItem, id=cart_item_id)
+    cart_item.delete()
+    return redirect('cart') 
+
+@login_required
 def proceed_to_pay(request):
     cart_items = CartItem.objects.filter(cart__user=request.user)
     total_amount = sum(item.pet.price * item.quantity for item in cart_items)
     return render(request, 'petstoreapp/proceed_to_pay.html', {'total_amount': total_amount})
 
+@login_required
+@csrf_exempt
+def payment_confirmation(request, total_amount):
+    # Your logic for payment confirmation here
+    # Get the current user's cart
+    cart = Cart.objects.get(user=request.user)
+    
+    # Get all cart items for the current user
+    cart_items = CartItem.objects.filter(cart=cart)
+    
+    # Calculate the total amount to be paid
+    total_amount = sum(item.pet.price * item.quantity for item in cart_items)
+    
+    # Initialize Razorpay client with your API key and secret
+    client = razorpay.Client(auth=(settings.RAZORPAY_TEST_KEY_ID, settings.RAZORPAY_TEST_KEY_SECRET))
+    
+    # Create Razorpay order
+    order_amount = int(total_amount * 100)  # Razorpay expects amount in paise
+    order_currency = 'INR'  # Change currency as per your requirement
+    order_receipt = 'order_rcptid_11'  # Replace with your order receipt ID
+    order = client.order.create({'amount': order_amount, 'currency': order_currency, 'receipt': order_receipt})
+    
+    # Pass Razorpay order details to the payment_confirmation template
+    context = {'order': order, 'razorpay_key_id': settings.RAZORPAY_TEST_KEY_ID}
+    
+    # Render the payment confirmation template
+    
+    return render(request, 'petstoreapp/payment_confirmation.html', context)
 
 @login_required
 def cart_view(request):
