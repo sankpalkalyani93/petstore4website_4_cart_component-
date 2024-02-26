@@ -11,11 +11,10 @@
         document.getElementById('rzp-button').addEventListener('click', function (e) {
             var options = {
                 key: "{{ razorpay_key_id }}",
-                amount: "{{ total_amount }}",
+                amount: "{{ order_amount }}",
                 currency: "INR",
                 name: "It Vedant",
                 description: "Purchase Description",
-                image: "/your_logo.png",
                 prefill: {
                     name: "Kalyani-Akash",
                     email: "sankpalkalyani93@gmail.com"

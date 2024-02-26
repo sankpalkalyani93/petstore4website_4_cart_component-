@@ -8,7 +8,7 @@
         <div class="col-md-6 offset-md-3">
             <h1>Proceed to Pay</h1>
             <p>Total Amount in INR{{ total_amount }}</p>
-            <form action="{% url 'payment_confirmation' total_amount %}" method="get">
+            <form action="{% url 'payment_confirmation' %}" method="get">
                 {% csrf_token %}
                 <input type="hidden" name="total_amount" value="{{ total_amount }}">
                 <button type="submit">Confirm Payment</button>

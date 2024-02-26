@@ -103,32 +103,36 @@ def remove_from_cart(request, cart_item_id):
 def proceed_to_pay(request):
     cart_items = CartItem.objects.filter(cart__user=request.user)
     total_amount = sum(item.pet.price * item.quantity for item in cart_items)
+    print("total amount in payment_confirmation --------> ", total_amount)
     return render(request, 'petstoreapp/proceed_to_pay.html', {'total_amount': total_amount})
 
 @login_required
 @csrf_exempt
-def payment_confirmation(request, total_amount):
+def payment_confirmation(request):
     # Your logic for payment confirmation here
     # Get the current user's cart
     cart = Cart.objects.get(user=request.user)
     
     # Get all cart items for the current user
     cart_items = CartItem.objects.filter(cart=cart)
-    
+    order_amount = 0
+
     # Calculate the total amount to be paid
     total_amount = sum(item.pet.price * item.quantity for item in cart_items)
-    
+    print("total amount in payment_confirmation --------> ", total_amount)
     # Initialize Razorpay client with your API key and secret
     client = razorpay.Client(auth=(settings.RAZORPAY_TEST_KEY_ID, settings.RAZORPAY_TEST_KEY_SECRET))
     
     # Create Razorpay order
-    order_amount = int(total_amount * 100)  # Razorpay expects amount in paise
+    # order_amount = int(total_amount * 100)  # Razorpay expects amount in paise
+    order_amount = (order_amount + total_amount) * 100
+    print("order_amount in payment_confirmation ------------ > ", order_amount)
     order_currency = 'INR'  # Change currency as per your requirement
     order_receipt = 'order_rcptid_11'  # Replace with your order receipt ID
     order = client.order.create({'amount': order_amount, 'currency': order_currency, 'receipt': order_receipt})
     
     # Pass Razorpay order details to the payment_confirmation template
-    context = {'order': order, 'razorpay_key_id': settings.RAZORPAY_TEST_KEY_ID}
+    context = {'order_amount': order_amount, 'order': order, 'razorpay_key_id': settings.RAZORPAY_TEST_KEY_ID}
     
     # Render the payment confirmation template
     
